@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo de Predicción y = 2x² - 3x + 1</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .formula {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            text-align: center;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TensorFlow.js Example</h1>
+    
+    <div class="formula">Fórmula: y = 2x² - 3x + 1</div>
+    
+    <div class="controls">
+        <button id="trainBtn">Entrenar Modelo</button>
+        <input type="number" id="xValue" placeholder="x" value="">
+        <button id="predictBtn">Predecir</button>
+    </div>
+    
+    <div id="result" class="result">
+        El resultado aparecerá aquí después de la predicción.
+    </div>
+
+    <div id="actualValue" class="result">
+        El valor real aparecerá aquí después de la predicción.
+    </div>
+
+    <div id="diferencia" class="result">
+        La diferencia entre el resultado y el valor real aparecerá aquí después de la predicción.
+    </div>
+
+    <script>
+        // Definir el modelo - con las capas
+        const model = tf.sequential();
+        model.add(tf.layers.dense({units: 10, activation: 'relu', inputShape: [1]}));
+        model.add(tf.layers.dense({units: 1}));
+        
+        // Compilar el modelo
+        model.compile({
+            loss: 'meanSquaredError',
+            optimizer: tf.train.adam(0.1)
+        });
+        
+        // Generar datos de entrenamiento para la función cuadrática
+        const xs = [];
+        const ys = [];
+        for (let x = -5; x <= 5; x += 0.5) {
+            xs.push(x);
+            ys.push(2 * Math.pow(x, 2) - 3 * x + 1);
+        }
+        
+        const xsTensor = tf.tensor2d(xs, [xs.length, 1]);
+        const ysTensor = tf.tensor2d(ys, [ys.length, 1]);
+        
+        // Elementos del DOM
+        const trainBtn = document.getElementById('trainBtn');
+        const predictBtn = document.getElementById('predictBtn');
+        const xValueInput = document.getElementById('xValue');
+        const resultDiv = document.getElementById('result');
+        const actualValueDiv = document.getElementById('actualValue');
+        const diferenciaDiv = document.getElementById('diferencia');
+        
+        // Entrenar el modelo
+        trainBtn.addEventListener('click', async () => {
+            trainBtn.disabled = true;
+            trainBtn.textContent = 'Entrenando...';
+            
+            // Entrenar por 500 épocas
+            await model.fit(xsTensor, ysTensor, {
+                epochs: 500,
+                callbacks: {
+                    onEpochEnd: (epoch, logs) => {
+                        if (epoch % 100 === 0) { // Mostrar progreso cada 100 épocas
+                            console.log(`Época ${epoch}: pérdida = ${logs.loss}`);
+                        }
+                        if (epoch === 499) { // Al finalizar
+                            trainBtn.textContent = 'Modelo entrenado';
+                            resultDiv.textContent = 'Modelo listo para predecir.';
+                        }
+                    }
+                }
+            });
+            
+            predictBtn.disabled = false;
+        });
+        
+        // Predecir
+        predictBtn.addEventListener('click', () => {
+            const xValue = parseFloat(xValueInput.value);
+            
+            if (isNaN(xValue)) {
+                resultDiv.textContent = 'Por favor ingresa un número válido para x';
+                return;
+            }
+            
+            // Predecir usando el modelo
+            const prediction = model.predict(tf.tensor2d([xValue], [1, 1]));
+            const predictedValue = prediction.dataSync()[0];
+
+            const actualValue = 2 * Math.pow(xValue, 2) - 3 * xValue + 1;
+            
+            resultDiv.textContent = `El resultado de predecir para ${xValue} es: ${predictedValue.toFixed(4)}`;
+            actualValueDiv.textContent = `El valor real es: ${actualValue.toFixed(4)}`;
+            diferenciaDiv.textContent = `La diferencia entre el resultado y el valor real es: ${Math.abs(predictedValue - actualValue).toFixed(4)}`;
+            
+            // Liberar memoria
+            tf.dispose(prediction);
+        });
+        
+        // Inicialmente deshabilitar el botón de predecir
+        predictBtn.disabled = true;
+    </script>
+</body>
+</html>
