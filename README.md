@@ -23,7 +23,7 @@ Este es un proyecto interactivo que utiliza [TensorFlow.js](https://www.tensorfl
 1. 📥 Clona este repositorio o descarga los archivos:
 
    ```bash
-   git clone https://github.com/tu-usuario/tfjs-cuadratica.git
+   git clone https://github.com/Alexis217/TensorFlowjs_funcion_cuadratica.git
    ```
 
 2. 🌍 Abre el archivo `index.html` en tu navegador.
